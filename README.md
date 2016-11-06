@@ -1,5 +1,6 @@
 # CASI
 Computer Age Statistical Inference code for textbook
+Book homepage: https://web.stanford.edu/~hastie/CASI/index.html
 
 Works directly with RStudio. Open up the .Rproj file and you're good to go. 
 Content:
