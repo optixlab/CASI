@@ -1,0 +1,57 @@
+---
+title: "Latex examples"
+output: html_notebook
+---
+
+Resources
+* https://www.mailman.columbia.edu/sites/default/files/media/fdawg_r_markdown_example.rmd
+
+#### Formulate a hypothesis:
+
+* [Laxtex reference](http://cs.brown.edu/about/system/managed/latex/doc/symbols.pdf): Symbols cheat sheet help.
+
+$$
+\sum\limits_{i=1}^n (y_i - \beta_0 - \beta_1x_i)^2
+$$
+
+* _math bold face_ and `rrr` is right justified. ~ is space.
+
+$$\mathbf{X} = \left[\begin{array}
+{rrr}
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9
+\end{array}\right]
+$$
+
+* Formulate a hypothesis 
+$$
+H_0 : \beta_1 = 0\\
+H_1 : \beta_1 \neq 0
+$$
+
+* Write an inline equation: $f(\alpha, \beta) \propto x^{\alpha-1}(1-x)^{\beta-1}$
+
+* Aligned equations
+
+$$
+\begin{aligned}
+\dot{x} & = \sigma(y-x)\\
+\dot{y} & = \rho x-y -xz\\
+\dot{z} & = -\beta z +xy
+\end{aligned}
+$$
+
+$`r 2+2`$
+
+
+
+```{r test-python, engine='python'}
+import sys
+x = 'hello, python world!'
+print(x)
+print(x.split(' '))
+print sys.version
+```
+
+

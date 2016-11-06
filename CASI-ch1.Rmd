@@ -1,0 +1,261 @@
+---
+title: "Chaper 1"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+This [book](https://web.stanford.edu/~hastie/CASI/data.html) was referenced by an [rblogger](rblogger.com) post. Downloaded as a Kindle file. 
+
+Attempting to follow the statistical principles with R-Code. Data used in this book is available online [here](https://web.stanford.edu/~hastie/CASI/data.html).
+
+### Chapter 1
+#### Figure 1.1
+Kitney fitness `tot` vs `age`
+
+References:
+1. Use of `pander` library [pander](http://stackoverflow.com/questions/20199176/how-to-set-the-number-of-decimals-in-report-produced-with-knitr-pander)
+2. Latex commands
+  * single vs double \$ sign
+
+### Setup
+```{r}
+library(readr)
+library(magrittr)
+library(tidyr)
+library(data.table)
+
+topdir = "C:/Users/yashroff/Dropbox/share/Projects/CASI"
+setwd(topdir)
+```
+
+Download the data
+```{r}
+kidney_url <- "https://web.stanford.edu/~hastie/CASI_files/DATA/kidney.txt"
+kidney <- read_delim(kidney_url, 
+    " ", escape_double = FALSE, trim_ws = TRUE)
+# View(kidney)
+```
+
+Alt: Download Data
+```{r}
+kidney <- read.table(kidney_url, header=TRUE, sep=" ")
+```
+
+$$
+y = \hat{\beta}_0 + \hat{\beta}_1x
+$$
+$$
+\sum\limits_{i=1}^n (y_i - \beta_0 - \beta_1x_i)^2
+$$
+```{r}
+lm.fit <- lm(tot ~ age, data=kidney)
+beta0 <- lm.fit$coefficients[1]
+beta1 <- lm.fit$coefficients[2]
+#print(lm.fit)
+cat("Intercept:", beta0, "\nSlope:", beta1)
+```
+
+```{r}
+ages <- data.frame(age = seq(20, 80, 10))
+y = predict(lm.fit, ages, se.fit = TRUE)
+print(data.frame(ages$age, y))
+```
+
+### Example of using loess
+```{r}
+cars.lo <- loess(dist ~ speed, cars)
+predict(cars.lo, data.frame(speed = seq(5, 30, 1)), se = TRUE)
+# to get extrapolation
+cars.lo2 <- loess(dist ~ speed, cars,
+  control = loess.control(surface = "direct"))
+predict(cars.lo2, data.frame(speed = seq(5, 30, 1)), se = TRUE)
+```
+
+```{r}
+plot(kidney, main="lowess(kidney)")
+lines(lowess(kidney), col=2)
+lines(lowess(kidney, f=.2), col=3)
+legend(60, 4.5, c(paste("f = ", c("2/3", ".2"))), lty = 1, col = 2:3)
+```
+### Bootstrap
+
+The boot command executes the resampling of your dataset and calculation of your statistic(s) of interest on these samples.  Before calling boot, you need to define a function that will return the statistic(s) that you would like to bootstrap.  The first argument passed to the function should be your dataset.  The second argument can be an index vector of the observations in your dataset to use or a frequency or weight vector that informs the sampling probabilities.  The example below uses the default index vector and assumes we wish to use all of our observations. The statistic of interest here is the correlation coefficient of write and math [ref](http://www.ats.ucla.edu/stat/r/faq/boot.htm). 
+
+
+```{r}
+# Example:
+library(boot)
+hsb2<-read.table("http://www.ats.ucla.edu/stat/data/hsb2.csv", sep=",", header=T)
+f <- function(d, i){
+	d2 <- d[i,]
+	return(cor(d2$write, d2$math))
+}
+bootcorr <- boot(hsb2, f, R=500)
+bootcorr
+summary(bootcorr)
+```
+
+Now, back to our data:
+```{r}
+get.beta=function(data,indices){ 
+  data=data[indices,] #let boot to select sample
+  #lm.out=lm(tot ~ age,data=data)
+  #return(lm.out$coefficients)
+  return(cor(data$age, data$tot))
+}
+
+bootcorr=boot(kidney,get.beta,R=1000) #generate 1000 random samples
+summary(bootcorr)
+```
+
+Knowing the seed value would allow us to replicate this analysis, if needed, and from the t vector and t0, we could calculate the bias and standard error:
+
+```{r}
+mean(bootcorr$t)-bootcorr$t0
+sd(bootcorr$t)
+
+```
+
+### Bootstrap confidence intervals and plots
+
+To look at a histogram and normal quantile-quantile plot of your bootstrap estimates, you can use plot with the "boot" object you created. The histogram includes a dotted vertical line indicating the location of the original statistic.
+```{r}
+plot(bootcorr)
+```
+
+# 1.2 Hypothesis testing
+
+Leukemia data
+
+Gene expression measurements on 72 leukemia patients, 47 "ALL" (see section 1.2), 25 "AML".
+These data arise from the landmark Golub et al (1999) Science paper.
+
+There is a larger set consisting of 7128 genes, which was used in Chapters 1, 10, 11, and possibly elsewhere. 
+It is stored as the 7128 x 72 matrix (10MB) [leukemia_big.csv](https://web.stanford.edu/~hastie/CASI_files/DATA/leukemia_big.csv), with the column names denoting the class labels. 
+
+The histograms in Figure 1.4 arise from row 136 of this matrix, and the histogram in Figure 1.5 is of the 7128 two-sample t-test statistics on the rows (genes).
+The data can be read directly into R via the command
+leukemia_big <- read.csv("http://web.stanford.edu/~hastie/CASI_files/DATA/leukemia_big.csv")
+
+There is also a smaller subset of these data, consisting of 3571 genes, used in Section 19.1.
+It is stored as the 3571 x 72 matrix (5MB) [leukemia_small.csv](https://web.stanford.edu/~hastie/CASI_files/DATA/leukemia_small.csv), with again the column names denoting the class labels.
+The data can be read directly into R via the command
+leukemia_small <- read.csv("http://web.stanford.edu/~hastie/CASI_files/DATA/leukemia_small.csv")
+
+Disclaimer: these data come with a data analysis challenge.
+The columns of the two datasets are in different order.
+Furthermore, the genes in the big dataset have been transformed, with the exact transformation used lost in time.
+We also do not know the correspondence between the 3157 and 7128 genes.
+The first person to solve this puzzle completely will be thanked and their name will appear forever on this page.
+
+```{r}
+leukemia_big <- read.csv("http://web.stanford.edu/~hastie/CASI_files/DATA/leukemia_big.csv")
+```
+
+Some analysis of the data:
+```{r}
+gene136AML <- leukemia_big[136,AMLindx] %>% unlist %>% unname
+gene136ALL <- leukemia_big[136,ALLindx] %>% unlist %>% unname
+```
+
+
+```{r}
+gene136 <- list(unname(unlist(leukemia_big[136,ALLindx])), unname(unlist(leukemia_big[136,AMLindx])))
+hist(gene136[[1]], col = 'pink', xlim = c(0.2,1.6), breaks = 11, xlab = "ALL", main = "ALL: Gene 136", ylim = c(0,10))
+hist(gene136[[2]], col = 'pink', xlim = c(0.2,1.6), breaks = 11, xlab = "AML", main = "AML: Gene 136", ylim = c(0,10))
+```
+
+The `AML` group shows more activity in gene 136. 
+$\overline{ALL} = `r mean(gene136[[1]])`$ and $\overline{AML} = `r mean(gene136[[2]])`$
+
+Calculate your own t.test [ref](http://stats.stackexchange.com/questions/30394/how-to-perform-two-sample-t-tests-in-r-by-inputting-sample-statistics-rather-tha)
+```{r}
+# m1, m2: the sample means
+# s1, s2: the sample standard deviations
+# n1, n2: the same sizes
+# m0: the null value for the difference in means to be tested for. Default is 0. 
+# equal.variance: whether or not to assume equal variance. Default is FALSE. 
+t.test2 <- function(m1,m2,s1,s2,n1,n2,m0=0,equal.variance=FALSE)
+{
+    if( equal.variance==FALSE ) 
+    {
+        se <- sqrt( (s1^2/n1) + (s2^2/n2) )
+        # welch-satterthwaite df
+        df <- ( (s1^2/n1 + s2^2/n2)^2 )/( (s1^2/n1)^2/(n1-1) + (s2^2/n2)^2/(n2-1) )
+    } else
+    {
+        # pooled standard deviation, scaled by the sample sizes
+        se <- sqrt( (1/n1 + 1/n2) * ((n1-1)*s1^2 + (n2-1)*s2^2)/(n1+n2-2) ) 
+        df <- n1+n2-2
+    }      
+    t <- (m1-m2-m0)/se 
+    dat <- c(m1-m2, se, t, 2*pt(-abs(t),df))    
+    names(dat) <- c("Difference of means", "Std Error", "t", "p-value")
+    return(dat) 
+}
+x1 = rnorm(100)
+x2 = rnorm(200) 
+# you'll find this output agrees with that of t.test when you input x1,x2
+t.test2( mean(x1), mean(x2), sd(x1), sd(x2), 100, 200)
+t.test(x = x1, y = x2, var.equal = FALSE)
+```
+
+### Equal or unequal sample sizes, equal variance
+This test is used only when it can be assumed that the two distributions have the same variance. The t statistic to test whether the means are different can be calculated as follows:
+
+$$
+t = \frac{\overline{X}_1 - \overline{X}_2}{s_p~~\dot~~\sqrt{\frac{1}{n_1} + \frac{1}{n_2}}}
+$$
+where, 
+$$
+s_p = \sqrt{\frac{(n_1-1)s_{X_1}^2 + (n_2-1)s_{X_2}^2}{n_1+n_2-2}}
+$$
+
+
+```{r}
+x1 = gene136[[1]]
+x2 = gene136[[2]]
+x1bar = mean(x1)
+x2bar = mean(x2)
+sdx1 = sd(x1)
+sdx2 = sd(x2)
+n1 = length(gene136[[1]])
+n2 = length(gene136[[2]])
+
+sp = sqrt(((n1-1)*sdx1^2 + (n2-1)*sdx2^2)/(n1+n2-2))
+se = (sp*sqrt(1/n1 + 1/n2))
+t = (x1bar - x2bar)/se
+df = n1+n2-2
+pval = 2*pt(-abs(t), df)
+dat <- c((x1bar-x2bar), se, t, pval)
+names(dat) <- c("Difference of means", "Std Error", "t", "p-value")
+print(dat, 4)
+cat("\nFor comparison")
+t.test(x = x1, y = x2, var.equal = TRUE)
+```
+
+#### t-test for all genes
+
+```{r}
+get_t <- function(dat=leukemia_big) {
+  n = nrow(dat)
+  AMLindx <- grep("AML",names(dat))
+  ALLindx <- grep("ALL",names(dat))
+  genes = seq_len(nrow(dat))
+  t_list = numeric(nrow(dat))
+  for (gene in genes) {
+    x1 <- dat[gene, ALLindx] %>% unlist %>% unname
+    x2 <- dat[gene, AMLindx] %>% unlist %>% unname
+    t_list[gene] <- t.test(x = x1, y = x2, var.equal = TRUE)$statistic
+  }
+  return (t_list)
+}
+
+t_list <- get_t(leukemia_big)
+```
+
+Reviewing the results
+```{r}
+hist(t_list, col = 'green', xlim = c(-10,10), breaks = 75, xlab = "t statistics", ylab = "Frequency")
+```

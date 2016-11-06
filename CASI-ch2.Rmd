@@ -1,0 +1,22 @@
+---
+title: "Chapter 2"
+output: html_notebook
+---
+## Frequentist Inference
+
+Download the kidney data
+
+211 kidney patients have had their _glomerular filtration rates_ measured. `gfr` is an important indicator of kidney function, low values are bad. 
+
+```{r}
+kidney_url <- "https://web.stanford.edu/~hastie/CASI_files/DATA/kidney.txt"
+kidney <- read_delim(kidney_url, 
+    " ", escape_double = FALSE, trim_ws = TRUE)
+```
+
+mean `r xbar = mean(kidney$glr)` and standard error, `r se = sd(kidney$glr)`
+
+
+```{r}
+hist(kidney, col = "green", xlab = "gfr", ylab = "Frequency", breaks = 31, xlim = c(20, 100))
+```

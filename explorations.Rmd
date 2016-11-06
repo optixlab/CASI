@@ -1,0 +1,74 @@
+---
+title: "R Explorations"
+output: html_notebook
+---
+
+In this notebook, I am exploring certain R concepts to help with a better understanding of the language. These code bits are also here for reference. 
+
+Index:
+* Useful functions
+  - download files
+* ggplot histogram
+* Latex fundamentals
+* t-statistic
+
+## Resources
+* http://www.statmethods.net/index.html
+* 
+
+## Useful functions: 
+#### Setup
+```{r}
+library(readr)
+library(magrittr)
+library(tidyr)
+library(data.table)
+library(ggplot2)
+```
+#### Download url data
+
+```{r comment="download"}
+fetch_data <- function(data_url, type="delim") {
+  if (type=="delim") {
+    my_data <- read_delim(data_url, " ", escape_double = FALSE, trim_ws = TRUE)    
+  } else if (type == "table") {
+    my_data <- read.table(data_url, sep=",", header=T)
+  } else if (type == "csv") {
+    my_data <- read.csv(data_url)
+  } else {
+    my_data = NULL
+  }
+  return(my_data)
+}
+```
+
+
+#### Latex
+
+
+#### Plotting
+Some practice with creating and plotting dataframes in R
+
+```{r}
+df = data.frame(time = 1:10,
+                a = cumsum(rnorm(10)),
+                b = cumsum(rnorm(10)),
+                c = cumsum(rnorm(10))
+)
+dfm <- melt(df, id.vars = 'time', variable.name = 'series', value.name = 'meas')
+
+# Two ways of plotting:
+ggplot(dfm, aes(time, meas)) + geom_line(aes(color=series))
+ggplot(dfm, aes(time, meas)) + geom_line() + facet_grid(series ~ .)
+```
+
+#### t-test (from help)
+```{r}
+## Classical example: Student's sleep data
+plot(extra ~ group, data = sleep)
+## Traditional interface
+with(sleep, t.test(extra[group == 1], extra[group == 2]))
+## Formula interface
+t.test(extra ~ group, data = sleep)
+#View(sleep)
+```
